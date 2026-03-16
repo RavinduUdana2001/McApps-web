@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --bg-1: #edf3ff;
+  --bg-2: #e4eeff;
+  --bg-3: #d7e6ff;
+
+  --primary: #2f66cc;
+  --primary-dark: #224e9f;
+  --primary-soft: #5f89da;
+
+  --text-main: #1f2a44;
+  --text-soft: #667694;
+  --text-faint: #8c98b0;
+
+  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-border: rgba(255, 255, 255, 0.48);
+  --card-bg: rgba(255, 255, 255, 0.74);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at top left, rgba(47, 102, 204, 0.1), transparent 24%),
+    radial-gradient(circle at top right, rgba(95, 137, 218, 0.1), transparent 18%),
+    linear-gradient(180deg, #f4f8ff 0%, #edf4ff 40%, #e7efff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input,
+select {
+  outline: none;
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 16px 40px rgba(37, 76, 150, 0.1);
+}
+
+.soft-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 26px rgba(37, 76, 150, 0.08);
+}
+
+.auth-bg::before,
+.auth-bg::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(50px);
+  z-index: 0;
+}
+
+.auth-bg::before {
+  width: 280px;
+  height: 280px;
+  left: -80px;
+  top: -80px;
+  background: rgba(47, 102, 204, 0.14);
+}
+
+.auth-bg::after {
+  width: 320px;
+  height: 320px;
+  right: -120px;
+  bottom: -120px;
+  background: rgba(95, 137, 218, 0.16);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+}
