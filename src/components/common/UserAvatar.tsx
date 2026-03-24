@@ -75,7 +75,7 @@ export default function UserAvatar({
       <img
         src={imageUrl}
         alt={displayName || "User"}
-        className={`rounded-full object-cover ${className}`}
+        className={`rounded-full border border-white/14 object-cover shadow-[0_10px_22px_rgba(2,11,28,0.28)] ${className}`}
         style={{ width: size, height: size }}
       />
     );
@@ -83,11 +83,11 @@ export default function UserAvatar({
 
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#dce8ff_0%,#eef4ff_100%)] text-[#305fbc] ${className}`}
+      className={`flex items-center justify-center rounded-full border border-white/12 bg-[linear-gradient(135deg,rgba(94,162,255,0.24)_0%,rgba(215,221,231,0.14)_100%)] text-white shadow-[0_10px_22px_rgba(2,11,28,0.24)] ${className}`}
       style={{ width: size, height: size }}
     >
       {displayName ? (
-        <span className="text-xs font-bold">{initials}</span>
+        <span className="text-xs font-bold tracking-[0.08em]">{initials}</span>
       ) : (
         <UserCircle2 size={size * 0.55} />
       )}

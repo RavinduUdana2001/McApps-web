@@ -1,9 +1,34 @@
 import axios from "axios";
+import { OFFLINE_MESSAGE } from "../utils/network";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 20000,
 });
+
+api.interceptors.request.use((config) => {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return Promise.reject(new Error(OFFLINE_MESSAGE));
+  }
+
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isOffline =
+      (typeof navigator !== "undefined" && !navigator.onLine) ||
+      error?.code === "ERR_NETWORK" ||
+      !error?.response;
+
+    if (isOffline) {
+      return Promise.reject(new Error(OFFLINE_MESSAGE));
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export type ApiMaybeSuccess<T> =
   | { status: "success"; message?: string; data: T }

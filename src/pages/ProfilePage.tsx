@@ -299,137 +299,124 @@ export default function ProfilePage() {
   const rightSideValues = isEditing ? form : EMPTY_FORM;
 
   return (
-    <AppShell>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="glass rounded-[28px] p-5 md:p-6">
-          <div className="flex flex-col items-center text-center">
-            <div className="relative">
-              <UserAvatar
-                email={email}
-                displayName={displayName}
-                size={118}
-                imageVersion={imageVersion}
-                className="shadow-[0_14px_30px_rgba(47,102,204,0.18)]"
-              />
-
-              <button
-                type="button"
-                onClick={handleImageClick}
-                disabled={uploadingImage}
-                className="absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#2f66cc] text-white shadow-lg transition hover:bg-[#2556ad] disabled:opacity-60"
-                title="Update image"
-              >
-                {uploadingImage ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Camera size={16} />
-                )}
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
-
-            <h1 className="mt-4 text-2xl font-bold text-[#1c2740]">
-              {displayName}
-            </h1>
-            <p className="mt-1 text-sm text-[#6d7c99]">
-              {originalProfile.title || "Employee"}
-            </p>
-
-            {imageNoticeText ? (
-              <div
-                className={`mt-4 w-full rounded-2xl border px-4 py-3 text-left ${
-                  imageNoticeType === "success"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-red-200 bg-red-50 text-red-600"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2">
-                    {imageNoticeType === "success" ? (
-                      <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-                    ) : (
-                      <AlertCircle size={18} className="mt-0.5 shrink-0" />
-                    )}
-                    <p className="text-sm font-medium">{imageNoticeText}</p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={clearImageNotice}
-                    className="shrink-0 rounded-full p-1 opacity-70 transition hover:opacity-100"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+    <AppShell desktopFitScreen>
+      <div className="theme-scrollbar lg:h-full lg:overflow-y-auto lg:pr-1.5">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <section className="app-page-surface rounded-[28px] p-5 md:p-6">
+          <div className="overflow-hidden rounded-[24px] border border-white/7 bg-[radial-gradient(circle_at_top,rgba(94,162,255,0.18),transparent_42%),linear-gradient(180deg,rgba(14,42,88,0.94)_0%,rgba(8,25,56,0.88)_100%)] p-5">
+            <div className="flex flex-col items-center text-center">
+              <div className="theme-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold">
+                <User2 size={14} />
+                Employee Profile
               </div>
-            ) : null}
 
-            <div className="mt-6 grid w-full gap-3">
-              <InfoCard icon={<Mail size={16} />} label="Email" value={email} />
-              <InfoCard
-                icon={<Building2 size={16} />}
-                label="Company"
-                value={originalProfile.company || "-"}
-              />
-              <InfoCard
-                icon={<Briefcase size={16} />}
-                label="Department"
-                value={originalProfile.department || "-"}
-              />
-              <InfoCard
-                icon={<Phone size={16} />}
-                label="Phone"
-                value={originalProfile.phoneNumber || "-"}
-              />
-              <InfoCard
-                icon={<User2 size={16} />}
-                label="Username"
-                value={username || "-"}
-              />
+              <div className="relative mt-5">
+                <UserAvatar
+                  email={email}
+                  displayName={displayName}
+                  size={120}
+                  imageVersion={imageVersion}
+                  className="shadow-[0_20px_40px_rgba(2,11,28,0.34)]"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleImageClick}
+                  disabled={uploadingImage}
+                  className="theme-button-primary absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full transition disabled:opacity-60"
+                  title="Update image"
+                >
+                  {uploadingImage ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Camera size={16} />
+                  )}
+                </button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+              </div>
+
+              <h1 className="mt-5 text-[1.65rem] font-bold text-white">
+                {displayName}
+              </h1>
+              <p className="theme-muted mt-1 text-sm">
+                {originalProfile.title || "Employee"}
+              </p>
+              <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-[#8faad3]">
+                {originalProfile.department || "Department"} {originalProfile.company ? `| ${originalProfile.company}` : ""}
+              </p>
+
+              {imageNoticeText ? (
+                <NoticeBanner
+                  type={imageNoticeType}
+                  text={imageNoticeText}
+                  onClose={clearImageNotice}
+                />
+              ) : null}
             </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <InfoCard icon={<Mail size={16} />} label="Email" value={email} />
+            <InfoCard
+              icon={<Building2 size={16} />}
+              label="Company"
+              value={originalProfile.company || "-"}
+            />
+            <InfoCard
+              icon={<Briefcase size={16} />}
+              label="Department"
+              value={originalProfile.department || "-"}
+            />
+            <InfoCard
+              icon={<Phone size={16} />}
+              label="Phone"
+              value={originalProfile.phoneNumber || "-"}
+            />
+            <InfoCard
+              icon={<User2 size={16} />}
+              label="Username"
+              value={username || "-"}
+            />
           </div>
         </section>
 
-        <section className="glass rounded-[28px] p-5 md:p-6">
-          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="mt-0.5 inline-flex items-center gap-2 rounded-full bg-[#eef4ff] px-3 py-1.5 text-xs font-semibold text-[#2f66cc]">
+        <section className="app-page-surface rounded-[28px] p-5 md:p-6">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-white/8 pb-5">
+            <div className="min-w-0">
+              <div className="theme-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold">
                 <FileText size={14} />
                 Employee Update Request
               </div>
 
-              <div className="min-w-0">
-                <h2 className="text-2xl font-bold text-[#1c2740] md:text-[2rem]">
-                  Profile Details
-                </h2>
-                <p className="mt-1 text-sm text-[#6d7c99]">
-                  Review your information and submit an update request if anything
-                  needs to be corrected.
-                </p>
-              </div>
+              <h2 className="theme-page-title mt-3 text-2xl font-bold md:text-[2rem]">
+                Profile Details
+              </h2>
+              <p className="theme-muted mt-1 text-sm leading-6">
+                Review your information and send an update request if anything needs correction.
+              </p>
             </div>
 
             {!isEditing ? (
               <button
                 type="button"
                 onClick={handleStartEdit}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#edf4ff] px-4 py-2 text-sm font-semibold text-[#2f66cc] transition hover:bg-[#e4efff]"
+                className="theme-button-secondary inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
               >
                 <Pencil size={16} />
-                Edit
+                Edit Profile
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-100"
+                className="theme-danger inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
               >
                 <X size={16} />
                 Cancel
@@ -438,33 +425,15 @@ export default function ProfilePage() {
           </div>
 
           {noticeText ? (
-            <div
-              className={`mb-5 flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 ${
-                noticeType === "success"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-red-200 bg-red-50 text-red-600"
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                {noticeType === "success" ? (
-                  <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-                ) : (
-                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
-                )}
-                <p className="text-sm font-medium">{noticeText}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={clearNotice}
-                className="shrink-0 rounded-full p-1 opacity-70 transition hover:opacity-100"
-              >
-                <X size={16} />
-              </button>
-            </div>
+            <NoticeBanner
+              type={noticeType}
+              text={noticeText}
+              onClose={clearNotice}
+              className="mb-5 shrink-0"
+            />
           ) : null}
 
-          <form onSubmit={handleSubmitUpdate} className="space-y-4">
+          <form onSubmit={handleSubmitUpdate} className="space-y-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Field
                 label="Display Name"
@@ -522,21 +491,21 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#33415d]">
+            <div className="app-page-soft-panel rounded-[24px] p-4">
+              <label className="mb-2 block text-sm font-semibold text-[#d3e3ff]">
                 Note
               </label>
               <textarea
                 name="user_note"
                 value={rightSideValues.user_note}
                 onChange={handleChange}
-                rows={3}
+                rows={4}
                 readOnly={!isEditing}
                 placeholder={isEditing ? "Write what needs to be updated..." : ""}
-                className={`w-full resize-none rounded-2xl border border-white/60 px-4 py-3 text-[#1f2a44] outline-none ${
+                className={`w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none ${
                   !isEditing
-                    ? "bg-[#f6f8fc] text-[#6d7c99]"
-                    : "bg-white/70 placeholder:text-[#97a3bb]"
+                    ? "theme-subtle-panel cursor-default text-[#90a8d0]"
+                    : "theme-input"
                 }`}
               />
             </div>
@@ -545,10 +514,10 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={!isEditing || submitting || !canSubmit}
-                className={`inline-flex min-w-[180px] items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-[0_16px_32px_rgba(47,102,204,0.20)] transition ${
+                className={`inline-flex min-w-[190px] items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
                   !isEditing
-                    ? "cursor-not-allowed bg-[#d8deea] text-[#8b98b1] shadow-none"
-                    : "bg-[linear-gradient(135deg,#2f66cc_0%,#5f89da_100%)] text-white hover:opacity-95"
+                    ? "cursor-not-allowed border border-white/8 bg-white/6 text-[#7892bc]"
+                    : "theme-button-primary"
                 }`}
               >
                 {submitting ? (
@@ -561,8 +530,48 @@ export default function ProfilePage() {
             </div>
           </form>
         </section>
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+function NoticeBanner({
+  type,
+  text,
+  onClose,
+  className = "",
+}: {
+  type: NoticeType;
+  text: string;
+  onClose: () => void;
+  className?: string;
+}) {
+  const toneClass = type === "success" ? "theme-success" : "theme-danger";
+
+  return (
+    <div
+      className={`${className} ${toneClass} mt-4 rounded-2xl px-4 py-3 text-left`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2">
+          {type === "success" ? (
+            <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+          ) : (
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+          )}
+          <p className="text-sm font-medium">{text}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-full p-1 opacity-70 transition hover:opacity-100"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -576,14 +585,12 @@ function InfoCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/55 bg-white/60 px-4 py-3 text-left">
-      <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold text-[#6d7c99]">
-        <span className="text-[#2f66cc]">{icon}</span>
+    <div className="app-page-soft-panel rounded-2xl px-4 py-3 text-left">
+      <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold text-[#9ab3da]">
+        <span className="text-[#bdddff]">{icon}</span>
         {label}
       </div>
-      <p className="break-words text-sm font-semibold text-[#1c2740]">
-        {value}
-      </p>
+      <p className="break-words text-sm font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -609,24 +616,24 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-[#33415d]">
-        {label} {required ? <span className="text-red-500">*</span> : null}
+      <label className="mb-2 block text-sm font-semibold text-[#d3e3ff]">
+        {label} {required ? <span className="text-[#ff8e8e]">*</span> : null}
       </label>
       <input
         name={name}
         value={value}
         onChange={onChange}
         readOnly={readOnly}
-        className={`w-full rounded-2xl border px-4 py-3 text-[#1f2a44] outline-none ${
+        className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${
           readOnly
-            ? "border-white/60 bg-[#f6f8fc] text-[#6d7c99]"
+            ? "theme-subtle-panel cursor-default text-[#90a8d0]"
             : error
-            ? "border-red-300 bg-white/70"
-            : "border-white/60 bg-white/70 placeholder:text-[#97a3bb]"
+            ? "rounded-2xl border border-[#ff8e8e]/30 bg-[rgba(255,99,99,0.08)] text-white"
+            : "theme-input"
         }`}
       />
       {error ? (
-        <p className="mt-2 text-xs font-medium text-red-500">{error}</p>
+        <p className="mt-2 text-xs font-medium text-[#ff8e8e]">{error}</p>
       ) : null}
     </div>
   );

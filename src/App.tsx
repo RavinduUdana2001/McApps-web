@@ -10,10 +10,13 @@ import ProfilePage from "./pages/ProfilePage";
 import QuickAccessPage from "./pages/QuickAccessPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicRoute from "./components/auth/PublicRoute";
+import OfflineBanner from "./components/common/OfflineBanner";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <OfflineBanner />
+
       <Routes>
         <Route
           path="/login"

@@ -1,19 +1,110 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import {
+  Bell,
+  BriefcaseBusiness,
+  FileText,
+  Headphones,
+  IdCard,
+  Mail,
+  Newspaper,
+  Search,
+  Users,
+  UtensilsCrossed,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { quickLinks } from "../../data/quickLinks";
 
 type Props = {
   mode?: "dashboard" | "page";
+  className?: string;
 };
 
-export default function QuickAccessGrid({ mode = "dashboard" }: Props) {
+type DashboardTile = {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  gradient: string;
+  href?: string;
+  to?: string;
+};
+
+const dashboardTiles: DashboardTile[] = [
+  {
+    id: "webmail",
+    title: "Webmail",
+    icon: Mail,
+    gradient: "from-[#4f91ff] to-[#1f61c8]",
+    href: "https://outlook.cloud.microsoft/mail/",
+  },
+  {
+    id: "hris",
+    title: "HRIS",
+    icon: IdCard,
+    gradient: "from-[#719fff] to-[#2a73da]",
+    href: "https://mhl.peopleshr.com/",
+  },
+  {
+    id: "group-intranet",
+    title: "Group Intranet",
+    icon: Users,
+    gradient: "from-[#5dafff] to-[#2d7edb]",
+    href: "https://intranet.mclarens.lk",
+  },
+  {
+    id: "work-hub",
+    title: "Work Hub",
+    icon: BriefcaseBusiness,
+    gradient: "from-[#7fa7df] to-[#42679a]",
+    href: "https://app.workhub24.com",
+  },
+  {
+    id: "stationary-request",
+    title: "Stationary Request",
+    icon: FileText,
+    gradient: "from-[#7cb6ff] to-[#336fcb]",
+    href: "https://office.mclarens.lk/",
+  },
+  {
+    id: "it-help-desk",
+    title: "IT Help Desk",
+    icon: Headphones,
+    gradient: "from-[#5d95f0] to-[#244ea8]",
+    href: "https://outlook.cloud.microsoft/mail/deeplink/compose?to=helpdesk@mclarens.lk",
+  },
+  {
+    id: "lunch",
+    title: "Lunch",
+    icon: UtensilsCrossed,
+    gradient: "from-[#6eb4ff] to-[#2d72d1]",
+    to: "/lunch-orders",
+  },
+  {
+    id: "alerts",
+    title: "McAlerts",
+    icon: Bell,
+    gradient: "from-[#77a7ff] to-[#3569c7]",
+    to: "/alerts",
+  },
+  {
+    id: "news",
+    title: "News & Events",
+    icon: Newspaper,
+    gradient: "from-[#89baff] to-[#3f7ad8]",
+    to: "/news",
+  },
+];
+
+export default function QuickAccessGrid({
+  mode = "dashboard",
+  className = "",
+}: Props) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const items = useMemo(() => {
     if (mode === "dashboard") {
-      return quickLinks.slice(0, 8);
+      return dashboardTiles;
     }
 
     const query = search.trim().toLowerCase();
@@ -22,105 +113,135 @@ export default function QuickAccessGrid({ mode = "dashboard" }: Props) {
       return quickLinks;
     }
 
-    return quickLinks.filter((item) =>
-      item.title.toLowerCase().includes(query)
+    return quickLinks.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.subtitle.toLowerCase().includes(query)
     );
   }, [mode, search]);
 
-  const handleOpen = (href: string) => {
-    window.open(href, "_blank", "noopener,noreferrer");
+  const handleTileClick = (item: DashboardTile | (typeof quickLinks)[number]) => {
+    if ("to" in item && item.to) {
+      navigate(item.to);
+      return;
+    }
+
+    if (item.href) {
+      window.open(item.href, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
     <section
       className={[
-        "glass rounded-[30px]",
-        mode === "dashboard" ? "h-full p-4 md:p-5" : "p-5 md:p-6",
+        mode === "dashboard"
+          ? "relative h-full overflow-hidden rounded-[30px] border border-[rgba(255,255,255,0.1)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(10,31,68,0.1)_100%)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-[12px] xl:p-4"
+          : "app-page-surface quick-access-page-surface relative overflow-hidden rounded-[30px] p-4 sm:p-5 md:p-6 lg:h-full lg:min-h-0",
+        className,
       ].join(" ")}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2
-            className={
-              mode === "dashboard"
-                ? "text-xl font-bold text-[#1c2740] xl:text-[1.8rem]"
-                : "text-2xl font-bold text-[#1c2740] md:text-[2rem]"
-            }
-          >
-            Quick Access
-          </h2>
-          <p className="mt-1 text-sm text-[#6d7c99]">
-            Open frequently used internal tools quickly
-          </p>
-        </div>
-
-        {mode === "dashboard" ? (
-          <button
-            onClick={() => navigate("/quick-access")}
-            className="rounded-full bg-[#edf4ff] px-4 py-2 text-sm font-semibold text-[#2d63c8] transition hover:bg-[#e4efff]"
-          >
-            View More
-          </button>
-        ) : null}
-      </div>
-
       {mode === "page" ? (
-        <div className="mb-5">
-          <div className="flex items-center gap-3 rounded-[22px] border border-white/60 bg-white/80 px-4 py-3 shadow-sm">
-            <Search size={18} className="text-[#7c8ba8]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search quick access items..."
-              className="w-full bg-transparent text-sm text-[#1c2740] outline-none placeholder:text-[#94a0b7]"
-            />
-          </div>
-        </div>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(94,162,255,0.06),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(215,221,231,0.03),transparent_20%)]" />
       ) : null}
 
-      {mode === "page" && items.length === 0 ? (
-        <div className="rounded-[24px] bg-white/70 p-8 text-center shadow-sm">
-          <p className="text-lg font-semibold text-[#1c2740]">No items found</p>
-          <p className="mt-2 text-sm text-[#7583a2]">
-            Try searching with another name.
-          </p>
-        </div>
-      ) : (
+      <div
+        className={
+          mode === "dashboard"
+            ? "relative flex h-full flex-col"
+            : "quick-access-page-scroll theme-scrollbar relative flex min-h-0 flex-col lg:h-full lg:overflow-y-auto lg:pr-1.5"
+        }
+      >
         <div
-          className={
-            mode === "dashboard"
-              ? "grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
-              : "grid grid-cols-2 gap-4 lg:grid-cols-4"
-          }
+          className={[
+            "mb-3 flex flex-col gap-2.5 md:flex-row md:justify-between xl:mb-4 xl:gap-3",
+            mode === "dashboard" ? "md:items-center" : "md:items-end",
+          ].join(" ")}
         >
-          {items.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleOpen(item.href)}
-                className={`group rounded-[24px] bg-white/80 shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-xl ${
-                  mode === "dashboard"
-                    ? "flex h-[132px] flex-col items-center justify-center p-3 text-center xl:h-[138px]"
-                    : "flex h-[150px] flex-col items-center justify-center p-4 text-center"
-                }`}
-              >
-                <div
-                  className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.gradient} text-white shadow-md`}
-                >
-                  <Icon size={22} />
-                </div>
-
-                <p className="line-clamp-2 text-center text-sm font-semibold text-[#1c2740] sm:text-base">
-                  {item.title}
-                </p>
-              </button>
-            );
-          })}
+          <div className="max-w-[760px]">
+            <h2
+              className={[
+                "theme-page-title font-bold",
+                mode === "dashboard"
+                  ? "text-[1.2rem] md:text-[1.34rem] xl:text-[1.56rem]"
+                  : "mt-3 text-[1.95rem] md:text-[2.3rem]",
+              ].join(" ")}
+            >
+              {mode === "dashboard" ? "Dashboard" : "Quick Access"}
+            </h2>
+          </div>
+          {mode === "dashboard" ? (
+            <button
+              onClick={() => navigate("/quick-access")}
+              className="theme-button-secondary inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition sm:text-xs xl:px-4 xl:py-2"
+            >
+              View More
+            </button>
+          ) : mode === "page" ? (
+            <div className="theme-input quick-access-page-search flex items-center gap-3 rounded-[22px] px-4 py-3 md:w-[320px] lg:w-[360px]">
+              <Search size={18} className="text-[#8fb4ea]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search quick access items..."
+                className="w-full bg-transparent text-sm text-white outline-none"
+              />
+            </div>
+          ) : null}
         </div>
-      )}
+
+        {mode === "page" && items.length === 0 ? (
+          <div className="theme-empty rounded-[24px] p-8 text-center">
+            <p className="text-lg font-semibold text-white">No items found</p>
+            <p className="mt-2 text-sm">
+              Try another keyword to find the tool you need.
+            </p>
+          </div>
+        ) : (
+          <div
+            className={
+              mode === "dashboard"
+                ? "grid flex-1 auto-rows-fr grid-cols-2 content-start gap-3 sm:grid-cols-3 xl:gap-[14px]"
+                : "quick-access-page-grid grid min-h-0 content-start grid-cols-2 gap-3 pb-2 sm:gap-3.5 sm:pb-3 md:grid-cols-3 xl:grid-cols-4"
+            }
+          >
+            {items.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTileClick(item)}
+                  className={`relative ${
+                    mode === "dashboard"
+                      ? "dashboard-quick-access-tile rounded-[24px] flex min-h-[94px] flex-col items-center justify-center gap-2 px-2.5 py-3 text-center sm:min-h-[100px] sm:px-3 sm:py-3.5 xl:min-h-[112px] xl:gap-3 xl:py-4 2xl:min-h-[118px]"
+                      : "app-page-card quick-access-page-card rounded-[24px] border border-[rgba(255,255,255,0.12)] bg-[linear-gradient(180deg,rgba(12,33,72,0.16)_0%,rgba(15,45,92,0.06)_100%)] backdrop-blur-[10px] flex min-h-[124px] flex-col items-center justify-center gap-3 overflow-hidden px-4 py-4 text-center sm:min-h-[132px] xl:min-h-[140px] 2xl:min-h-[148px]"
+                  }`}
+                >
+                  <div
+                    className={`relative flex items-center justify-center text-white ${
+                      mode === "dashboard"
+                        ? "h-[clamp(2.5rem,5.8vh,3.8rem)] w-[clamp(2.5rem,5.8vh,3.8rem)]"
+                        : "h-[clamp(2rem,3vw,2.8rem)] w-[clamp(2rem,3vw,2.8rem)]"
+                    }`}
+                  >
+                    <Icon
+                      className="h-full w-full"
+                      strokeWidth={1.9}
+                    />
+                  </div>
+
+                  <div className="relative w-full">
+                    <p className="line-clamp-2 text-[12px] font-semibold leading-4.5 text-white sm:text-[13px] sm:leading-5 xl:text-[15px]">
+                      {item.title}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

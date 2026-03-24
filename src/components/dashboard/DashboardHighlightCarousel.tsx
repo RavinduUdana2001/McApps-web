@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   BellRing,
   ChevronLeft,
   ChevronRight,
@@ -7,19 +8,25 @@ import {
   Loader2,
   MessageCircle,
   Newspaper,
+  RefreshCw,
   ThumbsUp,
+  WifiOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
+  getAlertsSnapshot,
+  getCachedAlerts,
   subscribeToAlertComments,
   subscribeToAlertLikes,
-  subscribeToAlerts,
+  toggleAlertLike,
 } from "../../services/alertsService";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus";
 import { getNewsList, toggleNewsLike } from "../../services/newsService";
 import { getSession } from "../../utils/session";
 import { getAlertUserIdentity } from "../../utils/firebaseUser";
 import { formatAlertDate } from "../../utils/alertsDate";
 import { formatDate } from "../../utils/date";
+import { getOfflineAwareMessage, OFFLINE_MESSAGE } from "../../utils/network";
 import type { AlertComment, AlertItem } from "../../types/alerts";
 import type { NewsItem } from "../../types/news";
 
@@ -27,6 +34,7 @@ type HighlightType = "alerts" | "news";
 
 type Props = {
   type: HighlightType;
+  className?: string;
 };
 
 type AlertCountsMap = Record<
@@ -45,47 +53,128 @@ type CarouselFooterProps = {
   onNext: () => void;
 };
 
-export default function DashboardHighlightCarousel({ type }: Props) {
+const DASHBOARD_REFRESH_MS = 5 * 60 * 1000;
+let cachedNewsItems: NewsItem[] = [];
+const ALERTS_CARD_ERROR_MESSAGE =
+  "Unable to load alerts right now. Please try again.";
+
+export default function DashboardHighlightCarousel({
+  type,
+  className = "",
+}: Props) {
   const navigate = useNavigate();
   const user = getSession();
   const userEmail = user?.mail ?? "";
   const { userId } = getAlertUserIdentity();
+  const isOnline = useNetworkStatus();
+  const initialAlertItems = getCachedAlerts().slice(0, 3);
 
-  const [alertItems, setAlertItems] = useState<AlertItem[]>([]);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [alertItems, setAlertItems] = useState<AlertItem[]>(initialAlertItems);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>(cachedNewsItems);
+  const [loading, setLoading] = useState(
+    type === "alerts"
+      ? initialAlertItems.length === 0
+      : cachedNewsItems.length === 0
+  );
   const [activeIndex, setActiveIndex] = useState(0);
   const [likingId, setLikingId] = useState<number | null>(null);
+  const [alertLikingId, setAlertLikingId] = useState<string | null>(null);
   const [alertCounts, setAlertCounts] = useState<AlertCountsMap>({});
+  const [errorText, setErrorText] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     setActiveIndex(0);
-    setLoading(true);
+  }, [type]);
+
+  useEffect(() => {
+    if (type !== "alerts") return;
+
+    setAlertItems(getCachedAlerts().slice(0, 3));
   }, [type]);
 
   useEffect(() => {
     if (type === "alerts") {
-      const unsub = subscribeToAlerts(
-        (items) => {
-          setAlertItems(items.slice(0, 3));
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Failed to load alerts:", error);
-          setAlertItems([]);
-          setLoading(false);
-        }
-      );
+      let cancelled = false;
+      const cachedItems = getCachedAlerts().slice(0, 3);
 
-      return () => unsub();
+      if (cachedItems.length > 0) {
+        setAlertItems(cachedItems);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+
+      const loadAlerts = async ({ silent = false }: { silent?: boolean } = {}) => {
+        try {
+          if (!silent && cachedItems.length === 0) {
+            setLoading(true);
+          }
+
+          const items = await getAlertsSnapshot();
+
+          if (cancelled) return;
+
+          const topItems = items.slice(0, 3);
+          setAlertItems(topItems);
+          setErrorText("");
+        } catch (error) {
+          console.error("Failed to load alerts:", error);
+
+          if (!cancelled) {
+            setErrorText(
+              getOfflineAwareMessage(error, ALERTS_CARD_ERROR_MESSAGE)
+            );
+          }
+
+          if (!cancelled && !silent && cachedItems.length === 0) {
+            setAlertItems([]);
+          }
+        } finally {
+          if (!cancelled && !silent) {
+            setLoading(false);
+          }
+        }
+      };
+
+      if (!isOnline && cachedItems.length === 0) {
+        setErrorText(OFFLINE_MESSAGE);
+        setLoading(false);
+      } else {
+        if (isOnline) {
+          setErrorText("");
+        }
+
+        void loadAlerts({
+          silent: cachedItems.length > 0 && reloadKey === 0,
+        });
+      }
+
+      const interval = isOnline
+        ? window.setInterval(() => {
+            void loadAlerts({ silent: true });
+          }, DASHBOARD_REFRESH_MS)
+        : null;
+
+      return () => {
+        cancelled = true;
+        if (interval !== null) {
+          window.clearInterval(interval);
+        }
+      };
     }
 
     let cancelled = false;
 
-    const loadNews = async () => {
+    const loadNews = async ({ silent = false }: { silent?: boolean } = {}) => {
       try {
+        if (!silent && cachedNewsItems.length === 0) {
+          setLoading(true);
+        }
+
         if (!userEmail) {
           if (!cancelled) {
+            cachedNewsItems = [];
             setNewsItems([]);
             setLoading(false);
           }
@@ -102,25 +191,28 @@ export default function DashboardHighlightCarousel({ type }: Props) {
             new Date(a.created_at).getTime()
         );
 
-        setNewsItems(sorted.slice(0, 3));
+        const topItems = sorted.slice(0, 3);
+        cachedNewsItems = topItems;
+        setNewsItems(topItems);
       } catch (error) {
         console.error("Failed to load news:", error);
-        if (!cancelled) {
+        if (!cancelled && !silent) {
+          cachedNewsItems = [];
           setNewsItems([]);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && !silent) {
           setLoading(false);
         }
       }
     };
 
-    loadNews();
+    void loadNews({ silent: cachedNewsItems.length > 0 });
 
     return () => {
       cancelled = true;
     };
-  }, [type, userEmail]);
+  }, [type, userEmail, isOnline, reloadKey]);
 
   useEffect(() => {
     if (type !== "alerts" || alertItems.length === 0) return;
@@ -218,45 +310,122 @@ export default function DashboardHighlightCarousel({ type }: Props) {
     }
   };
 
+  const handleAlertLike = async (item: AlertItem) => {
+    if (!userId || alertLikingId === item.id) return;
+
+    const current = alertCounts[item.id] ?? {
+      likeCount: 0,
+      iLiked: false,
+      commentCount: 0,
+    };
+
+    try {
+      setAlertLikingId(item.id);
+      await toggleAlertLike({
+        messageId: item.id,
+        userId,
+        iLiked: current.iLiked,
+      });
+    } catch (error) {
+      console.error("Failed to toggle alert like:", error);
+    } finally {
+      setAlertLikingId(null);
+    }
+  };
+
   const title = type === "alerts" ? "McAlerts" : "News & Events";
-  const subtitle =
-    type === "alerts"
-      ? "Important live company notifications"
-      : "Latest company highlights";
   const Icon = type === "alerts" ? BellRing : Newspaper;
   const total = items.length;
+  const shellClass =
+    `dashboard-highlight-shell flex h-full min-h-0 flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
+  const loadingShellClass =
+    `dashboard-highlight-shell flex h-full min-h-[220px] items-center justify-center rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
+  const emptyShellClass =
+    `dashboard-highlight-shell flex h-full min-h-[220px] flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
 
   if (loading) {
     return (
-      <section className="glass flex h-full min-h-[220px] items-center justify-center rounded-[28px] p-4">
-        <Loader2 className="animate-spin text-[#2f66cc]" />
+      <section className={loadingShellClass}>
+        <Loader2 className="animate-spin text-[#8dbaff]" />
+      </section>
+    );
+  }
+
+  if (type === "alerts" && errorText && items.length === 0) {
+    return (
+      <section className={emptyShellClass}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="theme-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold">
+              <BellRing size={13} />
+              Live Notices
+            </div>
+
+            <h2 className="theme-page-title mt-2 text-lg font-bold">{title}</h2>
+          </div>
+
+          <button
+            onClick={() => navigate("/alerts")}
+            className="theme-button-secondary shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition sm:text-sm"
+          >
+            View More
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-1 flex-col items-center justify-center rounded-[24px] border border-[rgba(255,173,120,0.2)] bg-[linear-gradient(180deg,rgba(70,34,16,0.48)_0%,rgba(46,21,10,0.42)_100%)] px-4 py-5 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[rgba(255,184,120,0.12)] text-[#ffd7b0]">
+            {errorText === OFFLINE_MESSAGE ? (
+              <WifiOff size={20} />
+            ) : (
+              <AlertTriangle size={20} />
+            )}
+          </div>
+
+          <p className="mt-3 text-sm font-semibold text-white">
+            {errorText === OFFLINE_MESSAGE
+              ? "No internet connection"
+              : "Unable to load alerts"}
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-[#f3d7bf]">
+            {errorText}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setReloadKey((prev) => prev + 1)}
+            className="theme-button-secondary mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition"
+          >
+            <RefreshCw size={13} />
+            Retry
+          </button>
+        </div>
       </section>
     );
   }
 
   if (items.length === 0) {
     return (
-      <section className="glass flex h-full min-h-[220px] flex-col rounded-[28px] p-4">
+      <section className={emptyShellClass}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-semibold text-[#2f66cc]">
+            <div className="theme-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold">
               <Icon size={13} />
               {type === "alerts" ? "Live Notices" : "Fresh Updates"}
             </div>
 
-            <h2 className="mt-3 text-xl font-bold text-[#1c2740]">{title}</h2>
-            <p className="text-sm text-[#6d7c99]">{subtitle}</p>
+            <h2 className="theme-page-title mt-2 text-lg font-bold">{title}</h2>
           </div>
 
           <button
             onClick={() => navigate(type === "alerts" ? "/alerts" : "/news")}
-            className="shrink-0 text-sm font-semibold text-[#2f66cc]"
+            className="theme-button-secondary shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition sm:text-sm"
           >
             View More
           </button>
         </div>
 
-        <div className="mt-4 flex flex-1 items-center justify-center rounded-[20px] bg-white/70 text-sm text-[#6d7c99]">
+        <div className="theme-empty mt-4 flex flex-1 items-center justify-center rounded-[24px] px-4 text-center text-sm">
           No items available right now.
         </div>
       </section>
@@ -264,27 +433,24 @@ export default function DashboardHighlightCarousel({ type }: Props) {
   }
 
   return (
-    <section className="glass flex h-full min-h-0 flex-col rounded-[28px] p-4">
+    <section className={shellClass}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-semibold text-[#2f66cc]">
-            <Icon size={13} />
-            {type === "alerts" ? "Live Notices" : "Fresh Updates"}
-          </div>
-
-          <h2 className="mt-3 text-xl font-bold text-[#1c2740]">{title}</h2>
-          <p className="text-sm text-[#6d7c99]">{subtitle}</p>
+          <h2 className="theme-page-title inline-flex items-center gap-2 text-[0.98rem] font-bold sm:text-[1.03rem] xl:text-[1.05rem] 2xl:text-lg">
+            <Icon size={16} className="text-[#9fc5ff]" />
+            {title}
+          </h2>
         </div>
 
         <button
           onClick={() => navigate(type === "alerts" ? "/alerts" : "/news")}
-          className="shrink-0 text-sm font-semibold text-[#2f66cc]"
+          className="theme-button-secondary shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold transition sm:text-[11px] xl:px-3.5 2xl:px-4"
         >
           View More
         </button>
       </div>
 
-      <div className="mt-4 flex min-h-0 flex-1 flex-col">
+      <div className="dashboard-highlight-body mt-3 flex min-h-0 flex-1 flex-col sm:mt-3.5 xl:mt-4">
         {type === "alerts" ? (
           (() => {
             const item = items[activeIndex] as AlertItem;
@@ -295,52 +461,72 @@ export default function DashboardHighlightCarousel({ type }: Props) {
             };
 
             return (
-              <div className="soft-card flex h-full min-h-0 flex-col justify-between rounded-[20px] p-4">
+              <div className="dashboard-highlight-alert-main flex h-full min-h-0 flex-col justify-between p-0.5">
                 <button
                   type="button"
                   onClick={() => navigate(`/alerts/${item.id}`)}
-                  className="w-full text-left"
+                  className="flex min-h-0 flex-1 text-left"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2f66cc] text-white">
-                      <BellRing size={18} />
+                  <div className="flex w-full items-start gap-2.5 overflow-hidden sm:gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#1f61c8_0%,#5ca6ff_100%)] text-white shadow-[0_14px_26px_rgba(18,82,178,0.3)] sm:h-9 sm:w-9 xl:h-10 xl:w-10">
+                      <BellRing size={16} />
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                    <div className="dashboard-highlight-copy min-w-0 flex-1 overflow-hidden">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs text-[#8ea0bf]">
+                        <p className="text-xs text-[#8ea9d3]">
                           {formatAlertDate(item.timestamp)}
                         </p>
 
                         {activeIndex === 0 ? (
-                          <span className="shrink-0 rounded-full bg-[#fff4db] px-2 py-1 text-[10px] font-semibold text-[#b7791f]">
+                          <span className="theme-warning shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold">
                             New
                           </span>
                         ) : null}
                       </div>
 
-                      <h3 className="mt-1 line-clamp-1 font-semibold text-[#1c2740]">
+                      <h3 className="dashboard-highlight-alert-title text-[13px] font-semibold text-white sm:text-[14px] xl:text-[15px] 2xl:text-base">
                         {item.title}
                       </h3>
 
-                      <p className="mt-1 line-clamp-2 text-sm text-[#6d7c99]">
+                      <p className="dashboard-highlight-alert-message text-[11.5px] leading-[1.1rem] text-[#bfd0ec] sm:text-[12.5px] sm:leading-[1.18rem] xl:text-[13px] xl:leading-5 2xl:text-sm">
                         {item.message}
                       </p>
                     </div>
                   </div>
                 </button>
 
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1 text-sm text-[#4f5f7d]">
-                      <ThumbsUp size={14} />
+                <div className="mt-2 shrink-0 flex flex-wrap items-center justify-between gap-1.5 border-t border-white/8 pt-2 sm:mt-2.5 sm:gap-2 sm:pt-2.5">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleAlertLike(item)}
+                      disabled={!userId || alertLikingId === item.id}
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition disabled:opacity-50 sm:px-2.5 sm:text-[11px] ${
+                        counts.iLiked
+                          ? "border border-[rgba(116,194,255,0.24)] bg-[linear-gradient(135deg,rgba(94,162,255,0.2)_0%,rgba(74,205,255,0.1)_100%)] text-[#eaf7ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                          : "theme-button-secondary"
+                      }`}
+                    >
+                      {alertLikingId === item.id ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <ThumbsUp
+                          size={12}
+                          className={counts.iLiked ? "fill-current" : ""}
+                        />
+                      )}
                       {counts.likeCount}
-                    </span>
+                    </button>
 
-                    <span className="flex items-center gap-1 text-sm text-[#4f5f7d]">
-                      <MessageCircle size={14} />
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/alerts/${item.id}`)}
+                      className="theme-button-secondary flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition sm:px-2.5 sm:text-[11px]"
+                    >
+                      <MessageCircle size={12} />
                       {counts.commentCount}
-                    </span>
+                    </button>
                   </div>
 
                   <CarouselFooter
@@ -361,68 +547,73 @@ export default function DashboardHighlightCarousel({ type }: Props) {
               `https://picsum.photos/seed/news-${item.id}/900/500`;
 
             return (
-              <div className="soft-card flex h-full min-h-0 flex-col justify-between rounded-[20px] p-3">
-                <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
+              <div className="dashboard-highlight-card flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-[rgba(255,255,255,0.1)] bg-[linear-gradient(180deg,rgba(12,33,72,0.18)_0%,rgba(15,45,92,0.08)_100%)] backdrop-blur-[10px]">
+                <div className="relative h-[clamp(102px,13.5vh,156px)] shrink-0 overflow-hidden bg-[linear-gradient(180deg,rgba(8,24,53,0.42)_0%,rgba(10,29,63,0.3)_100%)] 2xl:h-[clamp(112px,15vh,176px)]">
                   <img
                     src={imageUrl}
                     alt={item.title}
-                    className="h-[110px] w-[40%] shrink-0 rounded-lg object-cover sm:h-[118px]"
+                    className="h-full w-full object-cover object-[center_32%]"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#04122a]/56 via-transparent to-transparent" />
+                </div>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-[#8ea0bf]">
+                <div className="dashboard-highlight-news-main flex min-h-0 flex-1 flex-col px-3 py-2.5 sm:px-3.5 xl:px-4 xl:py-3">
+                  <div className="dashboard-highlight-copy min-h-0 flex-1 overflow-hidden">
+                    <p className="text-xs text-[#8ea9d3]">
                       {formatDate(item.created_at)}
                     </p>
 
                     <h3
                       onClick={() => navigate(`/news/${item.id}`)}
-                      className="mt-1 cursor-pointer line-clamp-2 font-semibold text-[#1c2740]"
+                      className="dashboard-highlight-news-title cursor-pointer text-[13px] font-semibold text-white sm:text-[14px] xl:text-[15px] 2xl:text-base"
                     >
                       {item.title}
                     </h3>
 
-                    <p className="mt-1 line-clamp-3 text-sm text-[#6d7c99]">
-                      {item.description}
-                    </p>
+                    {item.description ? (
+                      <p className="dashboard-highlight-news-description text-[12px] leading-4.5 text-[#bfd0ec] 2xl:text-[13px] 2xl:leading-5">
+                        {item.description}
+                      </p>
+                    ) : null}
                   </div>
-                </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/news/${item.id}`)}
-                    className="text-sm font-semibold text-[#2f66cc]"
-                  >
-                    Read more
-                  </button>
+                  <div className="mt-2 shrink-0 flex flex-wrap items-center justify-between gap-1.5 border-t border-white/8 pt-2 sm:mt-2.5 sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/news/${item.id}`)}
+                      className="theme-button-secondary rounded-full px-2.5 py-1 text-[10px] font-semibold transition sm:px-3 sm:text-[11px]"
+                    >
+                      Read more
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleNewsLike(item)}
-                    disabled={!userEmail || likingId === item.id}
-                    className="flex items-center gap-1 text-sm text-[#4f5f7d] disabled:opacity-50"
-                  >
-                    {likingId === item.id ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <Heart
-                        size={15}
-                        className={
-                          item.is_liked === 1
-                            ? "fill-current text-red-500"
-                            : ""
-                        }
-                      />
-                    )}
-                    {item.like_count}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNewsLike(item)}
+                      disabled={!userEmail || likingId === item.id}
+                      className="theme-button-secondary flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold disabled:opacity-50 sm:px-2.5 sm:text-[11px]"
+                    >
+                      {likingId === item.id ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Heart
+                          size={12}
+                          className={
+                            item.is_liked === 1
+                              ? "fill-current text-[#ff8da0]"
+                              : ""
+                          }
+                        />
+                      )}
+                      {item.like_count}
+                    </button>
 
-                  <CarouselFooter
-                    activeIndex={activeIndex}
-                    total={total}
-                    onPrev={goPrev}
-                    onNext={goNext}
-                  />
+                    <CarouselFooter
+                      activeIndex={activeIndex}
+                      total={total}
+                      onPrev={goPrev}
+                      onNext={goNext}
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -440,21 +631,21 @@ function CarouselFooter({
   onNext,
 }: CarouselFooterProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
       <button
         type="button"
         onClick={onPrev}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#5b6b88] transition hover:bg-[#eef4ff]"
+        className="theme-button-secondary inline-flex h-6 w-6 items-center justify-center rounded-full transition sm:h-7 sm:w-7"
         aria-label="Previous"
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={12} />
       </button>
 
       {Array.from({ length: total }).map((_, i) => (
         <span
           key={i}
-          className={`h-2 rounded-full transition-all ${
-            i === activeIndex ? "w-5 bg-[#2f66cc]" : "w-2 bg-[#ccd9f1]"
+          className={`h-1.5 rounded-full transition-all sm:h-2 ${
+            i === activeIndex ? "w-4 bg-[#74b0ff] sm:w-6" : "w-1.5 bg-white/22 sm:w-2"
           }`}
         />
       ))}
@@ -462,10 +653,10 @@ function CarouselFooter({
       <button
         type="button"
         onClick={onNext}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#5b6b88] transition hover:bg-[#eef4ff]"
+        className="theme-button-secondary inline-flex h-6 w-6 items-center justify-center rounded-full transition sm:h-7 sm:w-7"
         aria-label="Next"
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={12} />
       </button>
     </div>
   );
