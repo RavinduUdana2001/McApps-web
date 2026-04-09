@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Newspaper,
   RefreshCw,
-  ThumbsUp,
   WifiOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -337,11 +336,11 @@ export default function DashboardHighlightCarousel({
   const Icon = type === "alerts" ? BellRing : Newspaper;
   const total = items.length;
   const shellClass =
-    `dashboard-highlight-shell flex h-full min-h-0 flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
+    `dashboard-highlight-shell flex min-h-[228px] flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:min-h-[250px] sm:p-3 xl:h-full xl:min-h-0 xl:p-[0.95rem] 2xl:p-4 ${className}`;
   const loadingShellClass =
-    `dashboard-highlight-shell flex h-full min-h-[220px] items-center justify-center rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
+    `dashboard-highlight-shell flex min-h-[228px] items-center justify-center rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:min-h-[250px] sm:p-3 xl:h-full xl:min-h-[220px] xl:p-[0.95rem] 2xl:p-4 ${className}`;
   const emptyShellClass =
-    `dashboard-highlight-shell flex h-full min-h-[220px] flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3 xl:p-[0.95rem] 2xl:p-4 ${className}`;
+    `dashboard-highlight-shell flex min-h-[228px] flex-col rounded-[28px] border border-[rgba(133,177,255,0.18)] bg-[linear-gradient(180deg,rgba(7,24,54,0.22)_0%,rgba(9,31,69,0.12)_100%)] p-2.5 backdrop-blur-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:min-h-[250px] sm:p-3 xl:h-full xl:min-h-[220px] xl:p-[0.95rem] 2xl:p-4 ${className}`;
 
   if (loading) {
     return (
@@ -450,7 +449,7 @@ export default function DashboardHighlightCarousel({
         </button>
       </div>
 
-      <div className="dashboard-highlight-body mt-3 flex min-h-0 flex-1 flex-col sm:mt-3.5 xl:mt-4">
+      <div className="dashboard-highlight-body mt-3 flex min-h-[154px] flex-1 flex-col sm:mt-3.5 sm:min-h-[174px] xl:mt-4 xl:min-h-0">
         {type === "alerts" ? (
           (() => {
             const item = items[activeIndex] as AlertItem;
@@ -461,7 +460,7 @@ export default function DashboardHighlightCarousel({
             };
 
             return (
-              <div className="dashboard-highlight-alert-main flex h-full min-h-0 flex-col justify-between p-0.5">
+              <div className="dashboard-highlight-alert-main flex min-h-[154px] flex-1 flex-col justify-between p-0.5 sm:min-h-[174px] xl:h-full xl:min-h-0">
                 <button
                   type="button"
                   onClick={() => navigate(`/alerts/${item.id}`)}
@@ -496,24 +495,28 @@ export default function DashboardHighlightCarousel({
                   </div>
                 </button>
 
-                <div className="mt-2 shrink-0 flex flex-wrap items-center justify-between gap-1.5 border-t border-white/8 pt-2 sm:mt-2.5 sm:gap-2 sm:pt-2.5">
-                  <div className="flex items-center gap-2 sm:gap-3">
+                <div className="mt-2 shrink-0 flex flex-col gap-2 border-t border-white/8 pt-2 sm:mt-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:pt-2.5">
+                  <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
                     <button
                       type="button"
                       onClick={() => handleAlertLike(item)}
                       disabled={!userId || alertLikingId === item.id}
-                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition disabled:opacity-50 sm:px-2.5 sm:text-[11px] ${
+                      className={`flex w-full items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[10px] font-semibold transition disabled:opacity-50 sm:w-auto sm:px-2.5 sm:py-1 sm:text-[11px] ${
                         counts.iLiked
-                          ? "border border-[rgba(116,194,255,0.24)] bg-[linear-gradient(135deg,rgba(94,162,255,0.2)_0%,rgba(74,205,255,0.1)_100%)] text-[#eaf7ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                          : "theme-button-secondary"
+                          ? "border border-[rgba(255,119,147,0.28)] bg-[linear-gradient(135deg,rgba(255,111,145,0.22)_0%,rgba(255,86,106,0.12)_100%)] text-[#ffe7ed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                          : "theme-button-secondary text-[#ffd7df]"
                       }`}
                     >
                       {alertLikingId === item.id ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
-                        <ThumbsUp
+                        <Heart
                           size={12}
-                          className={counts.iLiked ? "fill-current" : ""}
+                          className={
+                            counts.iLiked
+                              ? "fill-current text-[#ff7d94] drop-shadow-[0_0_8px_rgba(255,125,148,0.28)]"
+                              : "text-[#ff8da0]"
+                          }
                         />
                       )}
                       {counts.likeCount}
@@ -522,7 +525,7 @@ export default function DashboardHighlightCarousel({
                     <button
                       type="button"
                       onClick={() => navigate(`/alerts/${item.id}`)}
-                      className="theme-button-secondary flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition sm:px-2.5 sm:text-[11px]"
+                      className="theme-button-secondary flex w-full items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[10px] font-semibold transition sm:w-auto sm:px-2.5 sm:py-1 sm:text-[11px]"
                     >
                       <MessageCircle size={12} />
                       {counts.commentCount}
@@ -547,7 +550,7 @@ export default function DashboardHighlightCarousel({
               `https://picsum.photos/seed/news-${item.id}/900/500`;
 
             return (
-              <div className="dashboard-highlight-card flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-[rgba(255,255,255,0.1)] bg-[linear-gradient(180deg,rgba(12,33,72,0.18)_0%,rgba(15,45,92,0.08)_100%)] backdrop-blur-[10px]">
+              <div className="dashboard-highlight-card flex min-h-[168px] flex-1 flex-col overflow-hidden rounded-[24px] border border-[rgba(255,255,255,0.1)] bg-[linear-gradient(180deg,rgba(12,33,72,0.18)_0%,rgba(15,45,92,0.08)_100%)] backdrop-blur-[10px] sm:min-h-[188px] xl:h-full xl:min-h-0">
                 <div className="relative h-[clamp(102px,13.5vh,156px)] shrink-0 overflow-hidden bg-[linear-gradient(180deg,rgba(8,24,53,0.42)_0%,rgba(10,29,63,0.3)_100%)] 2xl:h-[clamp(112px,15vh,176px)]">
                   <img
                     src={imageUrl}

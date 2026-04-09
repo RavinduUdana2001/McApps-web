@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BellRing, Loader2, MessageCircle, ThumbsUp } from "lucide-react";
+import { BellRing, Heart, Loader2, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   subscribeToAlertComments,
@@ -172,13 +172,13 @@ export default function AlertsSection() {
                     <div
                       className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold ${
                         stats.iLiked
-                          ? "bg-blue-50 text-blue-600"
-                          : "bg-[#edf4ff] text-[#5d6f91]"
+                          ? "bg-[rgba(255,111,145,0.14)] text-[#ff6f91]"
+                          : "bg-[rgba(255,141,160,0.12)] text-[#ff8da0]"
                       }`}
                     >
-                      <ThumbsUp
+                      <Heart
                         size={14}
-                        className={stats.iLiked ? "fill-blue-600" : ""}
+                        className={stats.iLiked ? "fill-current" : ""}
                       />
                       {stats.likeCount}
                     </div>

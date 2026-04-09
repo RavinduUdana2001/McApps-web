@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Heart,
   Loader2,
   MessageCircle,
   RefreshCw,
   Send,
-  ThumbsUp,
   BellRing,
   Pencil,
   Trash2,
@@ -418,7 +418,7 @@ export default function AlertDetailPage() {
               </div>
             ) : null}
 
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-5">
+            <div className="mb-5 flex flex-col gap-2.5 border-b border-white/8 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <button
                 onClick={() => navigate("/alerts")}
                 className="theme-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
@@ -427,39 +427,39 @@ export default function AlertDetailPage() {
                 Back
               </button>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                 <button
                   onClick={handleToggleLike}
                   disabled={!userId || togglingLike}
-                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition sm:w-auto ${
                     iLiked
-                      ? "border border-[rgba(116,194,255,0.24)] bg-[linear-gradient(135deg,rgba(94,162,255,0.2)_0%,rgba(74,205,255,0.1)_100%)] text-[#eaf7ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                      : "theme-button-secondary"
+                      ? "border border-[rgba(255,119,147,0.28)] bg-[linear-gradient(135deg,rgba(255,111,145,0.22)_0%,rgba(255,86,106,0.12)_100%)] text-[#ffe7ed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      : "theme-button-secondary text-[#ffd7df]"
                   } ${!userId ? "cursor-not-allowed opacity-60" : ""}`}
                 >
                   {togglingLike ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <ThumbsUp
+                    <Heart
                       size={16}
                       className={
                         iLiked
-                          ? "fill-current text-[#74c6ff] drop-shadow-[0_0_8px_rgba(116,198,255,0.22)]"
-                          : ""
+                          ? "fill-current text-[#ff7d94] drop-shadow-[0_0_8px_rgba(255,125,148,0.28)]"
+                          : "text-[#ff8da0]"
                       }
                     />
                   )}
                   {likeCount}
                 </button>
 
-                <div className="theme-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold">
+                <div className="theme-button-secondary inline-flex w-full items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold sm:w-auto">
                   <MessageCircle size={16} />
                   {comments.length}
                 </div>
               </div>
             </div>
 
-            <div className="app-page-card rounded-[24px] p-5 md:p-6">
+            <div className="app-page-card rounded-[24px] p-4 sm:p-5 md:p-6">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="theme-pill inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold">
                   <BellRing size={14} />
@@ -493,12 +493,12 @@ export default function AlertDetailPage() {
               </div>
 
               <div className="app-page-soft-panel rounded-[18px] p-3">
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                   <UserAvatar
                     email={userEmail}
                     displayName={userName}
                     size={34}
-                    className="mt-1 shrink-0"
+                    className="shrink-0 sm:mt-1"
                   />
 
                   <div className="min-w-0 flex-1">
@@ -554,7 +554,7 @@ export default function AlertDetailPage() {
                           />
 
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <p className="text-sm font-semibold text-white">
@@ -574,7 +574,7 @@ export default function AlertDetailPage() {
                               </div>
 
                               {isMine ? (
-                                <div className="flex shrink-0 items-center gap-1">
+                                <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                                   <button
                                     onClick={() => openEditModal(comment.id, comment.text)}
                                     className="theme-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-lg transition"

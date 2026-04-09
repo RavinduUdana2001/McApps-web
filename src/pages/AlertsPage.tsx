@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   BellRing,
+  Heart,
   Loader2,
   MessageCircle,
   RefreshCw,
-  ThumbsUp,
   WifiOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -285,8 +285,8 @@ export default function AlertsPage() {
                     onClick={() => navigate(`/alerts/${item.id}`)}
                     className="app-page-card cursor-pointer overflow-hidden rounded-[26px] transition duration-200 hover:border-[rgba(133,177,255,0.18)]"
                   >
-                    <div className="flex flex-col gap-3 p-3.5 md:flex-row md:items-start md:justify-between">
-                      <div className="flex min-w-0 flex-1 gap-3">
+                    <div className="flex flex-col gap-3.5 p-4 md:flex-row md:items-start md:justify-between">
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#1f61c8_0%,#5ca6ff_100%)] text-white shadow-[0_12px_24px_rgba(18,82,178,0.16)]">
                           <BellRing size={16} />
                         </div>
@@ -310,41 +310,41 @@ export default function AlertsPage() {
                             {item.title}
                           </h3>
 
-                          <p className="mt-1 line-clamp-2 max-w-[900px] text-sm leading-5 text-[#bfd0ec]">
+                          <p className="mt-1.5 max-w-[900px] text-sm leading-5 text-[#bfd0ec]">
                             {item.message}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 flex-wrap items-center gap-2 pt-0.5 md:justify-end">
+                      <div className="grid w-full shrink-0 grid-cols-3 gap-2 pt-1 md:flex md:w-auto md:flex-wrap md:items-center md:justify-end">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleToggleLike(item.id);
                           }}
                           disabled={!userId || processing}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                          className={`inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition md:w-auto md:px-3 md:py-1.5 ${
                             stats.iLiked
-                              ? "border border-[rgba(116,194,255,0.24)] bg-[linear-gradient(135deg,rgba(94,162,255,0.2)_0%,rgba(74,205,255,0.1)_100%)] text-[#eaf7ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                              : "theme-button-secondary"
+                              ? "border border-[rgba(255,119,147,0.28)] bg-[linear-gradient(135deg,rgba(255,111,145,0.22)_0%,rgba(255,86,106,0.12)_100%)] text-[#ffe7ed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                              : "theme-button-secondary text-[#ffd7df]"
                           } ${!userId ? "cursor-not-allowed opacity-60" : ""}`}
                         >
                           {processing ? (
                             <Loader2 size={14} className="animate-spin" />
                           ) : (
-                            <ThumbsUp
+                            <Heart
                               size={14}
                               className={
                                 stats.iLiked
-                                  ? "fill-current text-[#74c6ff] drop-shadow-[0_0_8px_rgba(116,198,255,0.22)]"
-                                  : ""
+                                  ? "fill-current text-[#ff7d94] drop-shadow-[0_0_8px_rgba(255,125,148,0.28)]"
+                                  : "text-[#ff8da0]"
                               }
                             />
                           )}
                           {stats.likeCount}
                         </button>
 
-                        <div className="theme-button-secondary inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold">
+                        <div className="theme-button-secondary inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold md:w-auto md:px-3 md:py-1.5">
                           <MessageCircle size={14} />
                           {stats.commentCount}
                         </div>
@@ -354,7 +354,7 @@ export default function AlertsPage() {
                             e.stopPropagation();
                             navigate(`/alerts/${item.id}`);
                           }}
-                          className="theme-button-secondary rounded-full px-3.5 py-1.5 text-sm font-semibold transition"
+                          className="theme-button-secondary inline-flex w-full items-center justify-center rounded-full px-3.5 py-2 text-sm font-semibold transition md:w-auto md:py-1.5"
                         >
                           Open
                         </button>

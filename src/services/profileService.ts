@@ -30,6 +30,10 @@ export type EmployeeUpdateResponse = {
 };
 
 const PROFILE_CACHE_PREFIX = "profile_image_url_";
+type ProfileImageCacheEntry = {
+  url: string;
+  savedAt: number;
+};
 
 export async function getProfileImage(email: string) {
   const body = new URLSearchParams();
@@ -77,8 +81,60 @@ export async function submitEmployeeUpdate(payload: EmployeeUpdatePayload) {
   return response.data;
 }
 
+export function getProfileImageCache(email: string): ProfileImageCacheEntry | null {
+  const raw = localStorage.getItem(`${PROFILE_CACHE_PREFIX}${email}`);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ProfileImageCacheEntry>;
+
+    if (typeof parsed?.url === "string" && parsed.url.trim()) {
+      return {
+        url: parsed.url,
+        savedAt:
+          typeof parsed.savedAt === "number" && Number.isFinite(parsed.savedAt)
+            ? parsed.savedAt
+            : 0,
+      };
+    }
+  } catch {
+    if (raw.trim()) {
+      return {
+        url: raw,
+        savedAt: 0,
+      };
+    }
+  }
+
+  return null;
+}
+
 export function setProfileImageCache(email: string, imageUrl: string) {
-  localStorage.setItem(`${PROFILE_CACHE_PREFIX}${email}`, imageUrl);
+  const payload: ProfileImageCacheEntry = {
+    url: imageUrl,
+    savedAt: Date.now(),
+  };
+
+  localStorage.setItem(`${PROFILE_CACHE_PREFIX}${email}`, JSON.stringify(payload));
+}
+
+export function buildProfileImageSrc(imageUrl: string, versionSeed?: number) {
+  if (!imageUrl) return "";
+
+  const version = versionSeed && Number.isFinite(versionSeed) ? String(versionSeed) : "";
+
+  if (!version) {
+    return imageUrl;
+  }
+
+  try {
+    const url = new URL(imageUrl, window.location.origin);
+    url.searchParams.set("v", version);
+    return url.toString();
+  } catch {
+    const joiner = imageUrl.includes("?") ? "&" : "?";
+    return `${imageUrl}${joiner}v=${encodeURIComponent(version)}`;
+  }
 }
 
 export function clearProfileImageCache(email?: string) {

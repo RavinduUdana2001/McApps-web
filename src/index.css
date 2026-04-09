@@ -607,12 +607,14 @@ img {
     0 14px 30px rgba(2, 11, 28, 0.06);
 }
 
-.dashboard-highlight-alert-main {
-  container: alert-highlight / size;
-}
+@media (min-width: 1280px) {
+  .dashboard-highlight-alert-main {
+    container: alert-highlight / size;
+  }
 
-.dashboard-highlight-news-main {
-  container: news-highlight / size;
+  .dashboard-highlight-news-main {
+    container: news-highlight / size;
+  }
 }
 
 .dashboard-highlight-card {
